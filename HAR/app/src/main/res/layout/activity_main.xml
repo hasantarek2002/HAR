@@ -21,60 +21,18 @@
             <TextView
                 android:id="@+id/title"
                 android:layout_weight="1"
-                android:text="activity"
+                android:text="Activity"
                 android:textAlignment="center"
                 android:textSize="20sp"
                 android:textStyle="bold|italic" />
 
             <TextView
-                android:id="@+id/textView"
+                android:id="@+id/probability"
                 android:layout_weight="1"
-                android:text="probability"
+                android:text="Probability"
                 android:textAlignment="center"
                 android:textSize="20sp"
                 android:textStyle="bold|italic" />
-        </TableRow>
-
-        <TableRow
-            android:id="@+id/downstairs_row"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:padding="22dp">
-
-            <TextView
-                android:id="@+id/downstairs_title"
-                android:layout_weight="1"
-                android:text="downstairs"
-                android:textAlignment="center"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/downstairs_prob"
-                android:layout_weight="1"
-                android:textAlignment="center"
-                android:textSize="18sp" />
-        </TableRow>
-
-        <TableRow
-            android:id="@+id/jogging_row"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:padding="22dp">
-
-            <TextView
-                android:id="@+id/jogging_title"
-                android:layout_weight="1"
-                android:text="jogging"
-                android:textAlignment="center"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/jogging_prob"
-                android:layout_weight="1"
-                android:textAlignment="center"
-                android:textSize="18sp" />
         </TableRow>
 
         <TableRow
@@ -86,7 +44,7 @@
             <TextView
                 android:id="@+id/sitting_title"
                 android:layout_weight="1"
-                android:text="sitting"
+                android:text="SITTING"
                 android:textAlignment="center"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -107,7 +65,7 @@
             <TextView
                 android:id="@+id/standing_title"
                 android:layout_weight="1"
-                android:text="standing"
+                android:text="STANDING"
                 android:textAlignment="center"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -120,42 +78,63 @@
         </TableRow>
 
         <TableRow
-            android:id="@+id/upstairs_row"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="22dp">
-
-            <TextView
-                android:id="@+id/upstairs_title"
-                android:layout_weight="1"
-                android:text="upstairs"
-                android:textAlignment="center"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/upstairs_prob"
-                android:layout_weight="1"
-                android:textAlignment="center"
-                android:textSize="18sp" />
-        </TableRow>
-
-        <TableRow
             android:id="@+id/walking_row"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
             android:padding="22dp">
 
             <TextView
                 android:id="@+id/walking_title"
                 android:layout_weight="1"
-                android:text="walking"
+                android:text="WALKING"
                 android:textAlignment="center"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/walking_prob"
+                android:layout_weight="1"
+                android:textAlignment="center"
+                android:textSize="18sp" />
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/walking_downstairs_row"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:padding="22dp">
+
+            <TextView
+                android:id="@+id/walking_downstairs_title"
+                android:layout_weight="1"
+                android:text="WALKING_DOWNSTAIRS"
+                android:textAlignment="center"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/walking_downstairs_prob"
+                android:layout_weight="1"
+                android:textAlignment="center"
+                android:textSize="18sp" />
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/walking_upstairs_row"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="22dp">
+
+            <TextView
+                android:id="@+id/walking_upstairs_title"
+                android:layout_weight="1"
+                android:text="WALKING_UPSTAIRS"
+                android:textAlignment="center"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/walking_upstairs_prob"
                 android:layout_weight="1"
                 android:textAlignment="center"
                 android:textSize="18sp" />

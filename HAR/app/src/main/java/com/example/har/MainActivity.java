@@ -22,28 +22,36 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+public class MainActivity extends AppCompatActivity implements SensorEventListener, TextToSpeech.OnInitListener {
 
-    private static final int N_SAMPLES = 200;
+    private static final int N_SAMPLES = 50;
+    private static final int N_TIME_STEPS = 10;
+    private static final int N_FEATURES = 31;
+    private static final int N_CLASSES = 5;
+
     private static List<Float> x;
     private static List<Float> y;
     private static List<Float> z;
-    private TextView downstairsTextView;
 
-    private TextView joggingTextView;
-    private TextView sittingTextView;
+    private TextView sittingsTextView;
     private TextView standingTextView;
-    private TextView upstairsTextView;
     private TextView walkingTextView;
+    private TextView walkingDownstairsTextView;
+    private TextView walkingUpstairsTextView;
     private TextToSpeech textToSpeech;
     private float[] results;
 
-    private String[] labels = {"Downstairs", "Jogging", "Sitting", "Standing", "Upstairs", "Walking"};
-
+    //private String[] labels = {"Downstairs", "Jogging", "Sitting", "Standing", "Upstairs", "Walking"};
+    private String[] labels = {"SITTING", "STANDING", "WALKING", "WALKING_DOWNSTAIRS", "WALKING_UPSTAIRS"};
 
     String modelFile = "converted_model.tflite";
     Interpreter tflite;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,12 +60,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         y = new ArrayList<>();
         z = new ArrayList<>();
 
-        downstairsTextView = (TextView) findViewById(R.id.downstairs_prob);
-        joggingTextView = (TextView) findViewById(R.id.jogging_prob);
-        sittingTextView = (TextView) findViewById(R.id.sitting_prob);
+        sittingsTextView = (TextView) findViewById(R.id.sitting_prob);
         standingTextView = (TextView) findViewById(R.id.standing_prob);
-        upstairsTextView = (TextView) findViewById(R.id.upstairs_prob);
         walkingTextView = (TextView) findViewById(R.id.walking_prob);
+        walkingDownstairsTextView = (TextView) findViewById(R.id.walking_downstairs_prob);
+        walkingUpstairsTextView = (TextView) findViewById(R.id.walking_upstairs_prob);
 
         try {
             tflite = new Interpreter(loadModelFile(this, modelFile));
@@ -65,9 +72,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         catch (IOException e) {
             e.printStackTrace();
         }
+
+        results = new float[N_CLASSES];
+        textToSpeech = new TextToSpeech(this, this);
+        textToSpeech.setLanguage(Locale.US);
     }
 
+    @Override
+    public void onInit(int i) {
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (results == null || results.length == 0) {
+                    return;
+                }
+                float max = -1;
+                int idx = -1;
+                for (int i = 0; i < results.length; i++) {
+                    if (results[i] > max) {
+                        idx = i;
+                        max = results[i];
+                    }
+                }
 
+                textToSpeech.speak(labels[idx], TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
+            }
+        }, 4000, 5000);
+    }
 
     protected void onPause() {
         getSensorManager().unregisterListener(this);
@@ -76,9 +108,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     protected void onResume() {
         super.onResume();
-        getSensorManager().registerListener(this, getSensorManager().getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
+        getSensorManager().registerListener(this, getSensorManager().getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
     }
-
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
@@ -95,60 +126,50 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
 
+    // 'SITTING', 'STANDING', 'WALKING', 'WALKING_DOWNSTAIRS', 'WALKING_UPSTAIRS'
+    // shape will be X = [None, N_TIME_STEPS, N_FEATURES] = [1, 10, 31]
+    // shape of y = [None, N_CLASSES] = [1,5]
+    // Android studio 3.4.1
 
     private void activityPrediction() {
         if (x.size() == N_SAMPLES && y.size() == N_SAMPLES && z.size() == N_SAMPLES) {
-            List<Float> data = new ArrayList<>();
-            data.addAll(x);
-            data.addAll(y);
-            data.addAll(z);
+            float[][][] inp=new float[1][N_TIME_STEPS][N_FEATURES];
+            float[][] out=new float[1][N_CLASSES];
+            float [] features_data = new float[N_FEATURES];
+            // here call the FeatureExtractor Class
+            // which will return the extracted features on features_data array
 
-            float[][][] inp=new float[1][200][3];
-            float[][] out=new float[1][6];
-            for(int i=0; i<inp[0].length; i++){
+            for(int i=0; i<N_TIME_STEPS; i++){
+                for (int j=0; j< N_FEATURES; j++){
+                    inp[0][i][j]=features_data[j];
+                }/*
                 inp[0][i][0]=x.get(i);
                 inp[0][i][1]=y.get(i);
                 inp[0][i][2]=z.get(i);
+                */
             }
 
             tflite.run(inp,out);
 
-            downstairsTextView.setText(Float.toString(round(out[0][0], 2)));
-            joggingTextView.setText(Float.toString(round(out[0][1], 2)));
-            sittingTextView.setText(Float.toString(round(out[0][2], 2)));
-            standingTextView.setText(Float.toString(round(out[0][3], 2)));
-            upstairsTextView.setText(Float.toString(round(out[0][4], 2)));
-            walkingTextView.setText(Float.toString(round(out[0][5], 2)));
+            for (int i=0; i<N_CLASSES; i++){
+                results[i] = out[0][i];
+            }
+            sittingsTextView.setText(Float.toString(round(out[0][0], 2)));
+            standingTextView.setText(Float.toString(round(out[0][1], 2)));
+            walkingTextView.setText(Float.toString(round(out[0][2], 2)));
+            walkingDownstairsTextView.setText(Float.toString(round(out[0][3], 2)));
+            walkingUpstairsTextView.setText(Float.toString(round(out[0][4], 2)));
 
-            Log.d("Result downstairs ",Float.toString(round(out[0][0], 2)) );
-            Log.d("Result jogging ",Float.toString(round(out[0][1], 2)) );
-            Log.d("Result sitting ",Float.toString(round(out[0][2], 2)) );
-            Log.d("Result standing ",Float.toString(round(out[0][3], 2)) );
-            Log.d("Result upstairs ",Float.toString(round(out[0][4], 2)) );
-            Log.d("Result walking ",Float.toString(round(out[0][5], 2)) );
-
-
-            //results = classifier.predictProbabilities(toFloatArray(data));
-           /* downstairsTextView.setText(Float.toString(round(results[0], 2)));
-            joggingTextView.setText(Float.toString(round(results[1], 2)));
-            sittingTextView.setText(Float.toString(round(results[2], 2)));
-            standingTextView.setText(Float.toString(round(results[3], 2)));
-            upstairsTextView.setText(Float.toString(round(results[4], 2)));
-            walkingTextView.setText(Float.toString(round(results[5], 2)));*/
+            Log.d("Result sitting ",Float.toString(round(out[0][0], 2)) );
+            Log.d("Result standing ",Float.toString(round(out[0][1], 2)) );
+            Log.d("Result walking ",Float.toString(round(out[0][2], 2)) );
+            Log.d("Result walk_downstair ",Float.toString(round(out[0][3], 2)) );
+            Log.d("Result walk_upstairs ",Float.toString(round(out[0][4], 2)) );
 
             x.clear();
             y.clear();
             z.clear();
         }
-    }
-    private float[] toFloatArray(List<Float> list) {
-        int i = 0;
-        float[] array = new float[list.size()];
-
-        for (Float f : list) {
-            array[i++] = (f != null ? f : Float.NaN);
-        }
-        return array;
     }
 
     private static float round(float d, int decimalPlace) {
@@ -169,5 +190,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         long declaredLength = fileDescriptor.getDeclaredLength();
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
+
 
 }
