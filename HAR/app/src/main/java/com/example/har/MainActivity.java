@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -30,13 +31,13 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity implements SensorEventListener, TextToSpeech.OnInitListener {
 
     private static final int N_SAMPLES = 50;
-    private static final int N_TIME_STEPS = 10;
+    private static final int N_TIME_STEPS = 2;
     private static final int N_FEATURES = 31;
     private static final int N_CLASSES = 5;
-
     private static List<Float> x;
     private static List<Float> y;
     private static List<Float> z;
+    List<List<Float>> feautureData;
 
     private TextView sittingsTextView;
     private TextView standingTextView;
@@ -44,13 +45,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView walkingDownstairsTextView;
     private TextView walkingUpstairsTextView;
     private TextToSpeech textToSpeech;
+
     private float[] results;
-
-    //private String[] labels = {"Downstairs", "Jogging", "Sitting", "Standing", "Upstairs", "Walking"};
     private String[] labels = {"SITTING", "STANDING", "WALKING", "WALKING_DOWNSTAIRS", "WALKING_UPSTAIRS"};
-
     String modelFile = "converted_model.tflite";
     Interpreter tflite;
+    FeatureExtractor fe;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         x = new ArrayList<>();
         y = new ArrayList<>();
         z = new ArrayList<>();
+
+        fe = new FeatureExtractor();
+        feautureData = new ArrayList<List<Float>>();
 
         sittingsTextView = (TextView) findViewById(R.id.sitting_prob);
         standingTextView = (TextView) findViewById(R.id.standing_prob);
@@ -117,14 +120,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         x.add(sensorEvent.values[0]);
         y.add(sensorEvent.values[1]);
         z.add(sensorEvent.values[2]);
-
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
 
     }
-
 
     // 'SITTING', 'STANDING', 'WALKING', 'WALKING_DOWNSTAIRS', 'WALKING_UPSTAIRS'
     // shape will be X = [None, N_TIME_STEPS, N_FEATURES] = [1, 10, 31]
@@ -133,39 +134,68 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void activityPrediction() {
         if (x.size() == N_SAMPLES && y.size() == N_SAMPLES && z.size() == N_SAMPLES) {
-            float[][][] inp=new float[1][N_TIME_STEPS][N_FEATURES];
-            float[][] out=new float[1][N_CLASSES];
-            float [] features_data = new float[N_FEATURES];
+            //float[][][] inp=new float[1][N_TIME_STEPS][N_FEATURES];
+            //float[][] out=new float[1][N_CLASSES];
+            //float [] features_data = new float[N_FEATURES];
+
             // here call the FeatureExtractor Class
             // which will return the extracted features on features_data array
+            //float magnitude[] = fe.calculateMagnitudeArray(x, y, z);
 
-            for(int i=0; i<N_TIME_STEPS; i++){
-                for (int j=0; j< N_FEATURES; j++){
-                    inp[0][i][j]=features_data[j];
-                }/*
-                inp[0][i][0]=x.get(i);
-                inp[0][i][1]=y.get(i);
-                inp[0][i][2]=z.get(i);
-                */
+            List<Float> magnitude = fe.calculateMagnitudeArray(x, y, z);
+            List<Float> means = fe.mean(x, y, z, magnitude);
+            List<Float> stds = fe.calculateSTD(x, y, z, magnitude);
+            List<Float> rms = fe.calculateRmsValue(x, y, z, magnitude);
+            List<Float> mins = fe.calculateMinValue(x, y, z, magnitude);
+            List<Float> maxs = fe.calculateMaxValue(x, y, z, magnitude);
+            List<Float> medians = fe.median(x, y, z, magnitude);
+            List<Float> mads = fe.mad(x, y, z, magnitude);
+            float corrXY = fe.Correlation(x, y);
+            float corrYZ = fe.Correlation(y, z);
+            float corrXZ = fe.Correlation(x, z);
+            List<Float> corr =  new ArrayList<>(Arrays.asList( corrXY,corrYZ,corrXZ));
+
+            List<Float> oneWindowFeatureData = new ArrayList<>();
+            oneWindowFeatureData.addAll(means);
+            oneWindowFeatureData.addAll(stds);
+            oneWindowFeatureData.addAll(rms);
+            oneWindowFeatureData.addAll(mins);
+            oneWindowFeatureData.addAll(maxs);
+            oneWindowFeatureData.addAll(medians);
+            oneWindowFeatureData.addAll(mads);
+            oneWindowFeatureData.addAll(corr);
+            if (feautureData.size() == N_TIME_STEPS){
+                float[][][] inp=new float[1][N_TIME_STEPS][N_FEATURES];
+                float[][] out=new float[1][N_CLASSES];
+
+                for(int i=0; i<N_TIME_STEPS; i++){
+                    for (int j=0; j< N_FEATURES; j++){
+                        inp[0][i][j]=feautureData.get(i).get(j);
+                    }
+                    //inp[0][i][0]=x.get(i);
+                }
+                feautureData.clear();
+                tflite.run(inp,out);
+
+                for (int i=0; i<N_CLASSES; i++){
+                    results[i] = out[0][i];
+                }
+
+                sittingsTextView.setText(Float.toString(round(out[0][0], 2)));
+                standingTextView.setText(Float.toString(round(out[0][1], 2)));
+                walkingTextView.setText(Float.toString(round(out[0][2], 2)));
+                walkingDownstairsTextView.setText(Float.toString(round(out[0][3], 2)));
+                walkingUpstairsTextView.setText(Float.toString(round(out[0][4], 2)));
+
+                Log.d("Result sitting ",Float.toString(round(out[0][0], 2)) );
+                Log.d("Result standing ",Float.toString(round(out[0][1], 2)) );
+                Log.d("Result walking ",Float.toString(round(out[0][2], 2)) );
+                Log.d("Result walk_downstair ",Float.toString(round(out[0][3], 2)) );
+                Log.d("Result walk_upstairs ",Float.toString(round(out[0][4], 2)) );
+            }else{
+                feautureData.add(oneWindowFeatureData);
+                oneWindowFeatureData.clear();
             }
-
-            tflite.run(inp,out);
-
-            for (int i=0; i<N_CLASSES; i++){
-                results[i] = out[0][i];
-            }
-            sittingsTextView.setText(Float.toString(round(out[0][0], 2)));
-            standingTextView.setText(Float.toString(round(out[0][1], 2)));
-            walkingTextView.setText(Float.toString(round(out[0][2], 2)));
-            walkingDownstairsTextView.setText(Float.toString(round(out[0][3], 2)));
-            walkingUpstairsTextView.setText(Float.toString(round(out[0][4], 2)));
-
-            Log.d("Result sitting ",Float.toString(round(out[0][0], 2)) );
-            Log.d("Result standing ",Float.toString(round(out[0][1], 2)) );
-            Log.d("Result walking ",Float.toString(round(out[0][2], 2)) );
-            Log.d("Result walk_downstair ",Float.toString(round(out[0][3], 2)) );
-            Log.d("Result walk_upstairs ",Float.toString(round(out[0][4], 2)) );
-
             x.clear();
             y.clear();
             z.clear();
@@ -190,6 +220,4 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         long declaredLength = fileDescriptor.getDeclaredLength();
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
-
-
 }
