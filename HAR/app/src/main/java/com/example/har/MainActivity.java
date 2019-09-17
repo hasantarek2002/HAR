@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static List<Float> x;
     private static List<Float> y;
     private static List<Float> z;
-    List<List<Float>> feautureData;
+    private static List< List<Float> > feautureData;
 
     private TextView sittingsTextView;
     private TextView standingTextView;
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         z = new ArrayList<>();
 
         fe = new FeatureExtractor();
-        feautureData = new ArrayList<List<Float>>();
+        feautureData = new ArrayList< List<Float> >();
 
         sittingsTextView = (TextView) findViewById(R.id.sitting_prob);
         standingTextView = (TextView) findViewById(R.id.standing_prob);
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 textToSpeech.speak(labels[idx], TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
             }
-        }, 4000, 5000);
+        }, 2000, 5000);
     }
 
     protected void onPause() {
@@ -164,17 +164,31 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             oneWindowFeatureData.addAll(medians);
             oneWindowFeatureData.addAll(mads);
             oneWindowFeatureData.addAll(corr);
+
+            if (feautureData.size() != N_TIME_STEPS){
+                Log.d("one window", "Size "+Integer.toString(oneWindowFeatureData.size()) + oneWindowFeatureData.toString() );
+                feautureData.add(oneWindowFeatureData);
+                Log.d("one window for feature", "Size "+Integer.toString(feautureData.size())+" ,one window for feature Size "+ feautureData.toString() );
+//                oneWindowFeatureData.clear();
+            }
+
             if (feautureData.size() == N_TIME_STEPS){
                 float[][][] inp=new float[1][N_TIME_STEPS][N_FEATURES];
                 float[][] out=new float[1][N_CLASSES];
 
                 for(int i=0; i<N_TIME_STEPS; i++){
                     for (int j=0; j< N_FEATURES; j++){
+                        //Log.d("feature", "size "+Integer.toString(feautureData.size()) + feautureData.toString() );
                         inp[0][i][j]=feautureData.get(i).get(j);
                     }
                     //inp[0][i][0]=x.get(i);
                 }
+
+                for (int i=0; i< feautureData.size(); i++){
+                    feautureData.get(i).clear();
+                }
                 feautureData.clear();
+
                 tflite.run(inp,out);
 
                 for (int i=0; i<N_CLASSES; i++){
@@ -192,15 +206,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 Log.d("Result walking ",Float.toString(round(out[0][2], 2)) );
                 Log.d("Result walk_downstair ",Float.toString(round(out[0][3], 2)) );
                 Log.d("Result walk_upstairs ",Float.toString(round(out[0][4], 2)) );
-            }else{
-                feautureData.add(oneWindowFeatureData);
-                oneWindowFeatureData.clear();
             }
             x.clear();
             y.clear();
             z.clear();
         }
     }
+
 
     private static float round(float d, int decimalPlace) {
         BigDecimal bd = new BigDecimal(Float.toString(d));
