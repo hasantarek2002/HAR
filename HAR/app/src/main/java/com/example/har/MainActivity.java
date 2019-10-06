@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -101,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 textToSpeech.speak(labels[idx], TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
             }
-        }, 2000, 5000);
+        }, 4000, 5000);
     }
 
     protected void onPause() {
@@ -112,6 +113,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onResume() {
         super.onResume();
         getSensorManager().registerListener(this, getSensorManager().getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    @Override
+    public void onBackPressed() {
+        Toast.makeText(this, "ooh crap!", Toast.LENGTH_SHORT).show();
     }
 
     @Override
