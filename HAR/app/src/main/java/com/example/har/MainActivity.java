@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 textToSpeech.speak(labels[idx], TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
             }
-        }, 4000, 5000);
+        }, 5000, 5000);
     }
 
     protected void onPause() {
