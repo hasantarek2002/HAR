@@ -31,7 +31,7 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity implements SensorEventListener, TextToSpeech.OnInitListener{
 
     private static final int N_SAMPLES = 50;
-    private static final int N_TIME_STEPS = 2;
+    private static final int N_TIME_STEPS = 5;
     private static final int N_FEATURES = 31;
     private static final int N_CLASSES = 3;
     private static List<Float> x;
