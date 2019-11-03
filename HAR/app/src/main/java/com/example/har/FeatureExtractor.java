@@ -154,20 +154,21 @@ public class FeatureExtractor {
 
 	public List<Float> mad(List<Float> x, List<Float> y, List<Float> z, List<Float> magnitude) {
 
-		List<Float> median = median(x, y, z, magnitude);
-		List<Float> medianArrayDeviationX = new ArrayList<>();
-		List<Float> medianArrayDeviationY = new ArrayList<>();
-		List<Float> medianArrayDeviationZ = new ArrayList<>();
-		List<Float> medianArrayDeviationMagnitude = new ArrayList<>();
+		List<Float> mean = mean(x, y, z, magnitude);
+		List<Float> meanArrayDeviationX = new ArrayList<>();
+		List<Float> meanArrayDeviationY = new ArrayList<>();
+		List<Float> meanArrayDeviationZ = new ArrayList<>();
+		List<Float> meanArrayDeviationMagnitude = new ArrayList<>();
 
 		for (int i = 0; i < x.size(); i++) {
-			medianArrayDeviationX.add(Math.abs(x.get(i) - median.get(0)));
-			medianArrayDeviationY.add(Math.abs(y.get(i) - median.get(1)));
-			medianArrayDeviationZ.add(Math.abs(z.get(i) - median.get(2)));
-			medianArrayDeviationMagnitude.add(Math.abs(magnitude.get(i) - median.get(3)));
+			meanArrayDeviationX.add(Math.abs(x.get(i) - mean.get(0)));
+			meanArrayDeviationY.add(Math.abs(y.get(i) - mean.get(1)));
+			meanArrayDeviationZ.add(Math.abs(z.get(i) - mean.get(2)));
+			meanArrayDeviationMagnitude.add(Math.abs(magnitude.get(i) - mean.get(3)));
 		}
-		return median(medianArrayDeviationX, medianArrayDeviationY, medianArrayDeviationZ,
-				medianArrayDeviationMagnitude);
+		//System.out.println(medianArrayDeviationX.toString());
+		return mean(meanArrayDeviationX, meanArrayDeviationY, meanArrayDeviationZ,
+				meanArrayDeviationMagnitude);
 	}
 
 	public float Correlation(List<Float> xs, List<Float> ys) {
