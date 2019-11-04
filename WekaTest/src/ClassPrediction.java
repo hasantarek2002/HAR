@@ -172,6 +172,15 @@ public class ClassPrediction {
 		System.out.println("////");
 		System.out.println(rf.classifyInstance(dataset.instance(0)));
 		
+		/*
+		 * dataset.clear(); inst = new DenseInstance(1.0, values); dataset.add(inst);
+		 * 
+		 * dataset.setClassIndex(dataset.numAttributes()-1);
+		 * 
+		 * System.out.println("////");
+		 * System.out.println(rf.classifyInstance(dataset.instance(0)));
+		 */
+		
 	}
 
 }
